@@ -24,6 +24,8 @@ class Game15():
     def new_click(self):
         self.buttons_positions = list(range(15))
         random.shuffle(self.buttons_positions)
+        while not self.check_combination(self.buttons_positions):
+            random.shuffle(self.buttons_positions)
         # пустота
         self.buttons_positions.append(None)
         self.grid()
@@ -51,6 +53,19 @@ class Game15():
                 tk.messagebox.showinfo(message="Won!")
                 self.new_click()
         return move
+
+    def check_combination(self, order):
+        """
+        поверка комбинации на собираемость (взято с википедии), е = 4 - четное, поэтому исключаем из суммы
+        :param order:
+        :return:
+        """
+        N = 0
+        for i_idx, i in enumerate(order):
+            for j in range(i_idx + 1, 15):
+                N += int(i > order[j])
+
+        return N % 2 == 0
 
     def won(self):
         won = True
