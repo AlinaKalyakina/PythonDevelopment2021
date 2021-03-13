@@ -38,9 +38,17 @@ class Game15():
             self.numbers[button_id].grid(column=i % 4, row=1 + i // 4, sticky=tk.NSEW)
 
     def number_click(self, n):
-        def move_fn():
-            pass
-        return move_fn
+        def move():
+            n_pos = self.buttons_order.index(n)
+            n_y, n_x = divmod(n_pos, 4)
+            none_coord = self.buttons_order.index(None)
+            none_y, none_x = divmod(none_coord, 4)
+            if n_x == none_x and abs(n_y-none_y) == 1  or abs(n_x - none_x) == 1 and n_y == none_y:
+                self.buttons_order[n_pos], self.buttons_order[none_coord] = \
+                    self.buttons_order[none_coord], self.buttons_order[n_pos]
+            self.place_buttons()
+
+        return move
 
 
     def run(self):
