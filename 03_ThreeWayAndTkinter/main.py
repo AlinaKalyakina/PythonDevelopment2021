@@ -2,7 +2,7 @@
 import random
 
 import tkinter as tk
-
+import tkinter.messagebox
 
 class Game15():
     def __init__(self):
@@ -22,39 +22,48 @@ class Game15():
         self.new_click()
 
     def new_click(self):
-        self.buttons_order = list(range(15))
-        random.shuffle(self.buttons_order)
+        self.buttons_positions = list(range(15))
+        random.shuffle(self.buttons_positions)
         # пустота
-        self.buttons_order.append(None)
-        self.place_buttons()
+        self.buttons_positions.append(None)
+        self.grid()
 
     def exit(self):
         self.window.destroy()
 
-    def place_buttons(self):
-        for i, button_id in enumerate(self.buttons_order):
+    def grid(self):
+        for i, button_id in enumerate(self.buttons_positions):
             if button_id is None:
                 continue
             self.numbers[button_id].grid(column=i % 4, row=1 + i // 4, sticky=tk.NSEW)
 
     def number_click(self, n):
         def move():
-            n_pos = self.buttons_order.index(n)
+            n_pos = self.buttons_positions.index(n)
             n_y, n_x = divmod(n_pos, 4)
-            none_coord = self.buttons_order.index(None)
+            none_coord = self.buttons_positions.index(None)
             none_y, none_x = divmod(none_coord, 4)
-            if n_x == none_x and abs(n_y-none_y) == 1  or abs(n_x - none_x) == 1 and n_y == none_y:
-                self.buttons_order[n_pos], self.buttons_order[none_coord] = \
-                    self.buttons_order[none_coord], self.buttons_order[n_pos]
-            self.place_buttons()
-
+            if n_x == none_x and abs(n_y-none_y) == 1 or abs(n_x - none_x) == 1 and n_y == none_y:
+                self.buttons_positions[n_pos], self.buttons_positions[none_coord] = \
+                    self.buttons_positions[none_coord], self.buttons_positions[n_pos]
+            self.grid()
+            if self.won():
+                tk.messagebox.showinfo(message="Won!")
+                self.new_click()
         return move
 
+    def won(self):
+        won = True
+        for idx, n in enumerate(self.buttons_positions[:-1]):
+            if idx != n:
+                won = False
+        return won
 
     def run(self):
         self.window.mainloop()
 
 
 if __name__ == '__main__':
+    random.seed(42)
     game = Game15()
     game.run()
