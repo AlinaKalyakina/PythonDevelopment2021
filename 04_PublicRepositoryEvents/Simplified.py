@@ -5,7 +5,6 @@ from tkinter.messagebox import showinfo
 
 class Application(tk.Frame):
     def __init__(self, master=None, title="Application", **kwargs):
-        '''Create root window with frame, tune weight and resize'''
         super().__init__(master, **kwargs)
         self.master.title(title)
         self.master.columnconfigure(0, weight=1)
@@ -15,7 +14,9 @@ class Application(tk.Frame):
 
     def __getattr__(self, attr):
         def widget_constructor(attr, root):
+            """Конструктор конструктора виджета по его имени """
             def widget_class_wrapper(widget_class, description_str, **kwargs):
+                """Парсит строку-описание положения виджета и создает теневой класс для него"""
                 description = Application.parse_description(description_str)
 
                 class DummyWidget(widget_class):
