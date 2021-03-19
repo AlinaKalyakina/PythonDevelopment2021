@@ -38,17 +38,15 @@ class Application(tk.Frame):
 
     @staticmethod
     def parse_description(description):
-        default_dict = {'row': "None", 'row_weight': "1", 'col': "None", 'col_weight': "1", 'colspan': "0", 'sticky': 'NEWS', "rowspan": "0"}
+        default_dict = {'row': None, 'row_weight': 1, 'col': None, 'col_weight': 1, 'colspan': 0, 'sticky': 'NEWS', "rowspan": 0}
 
         description_dict = re.match(
             r"(?P<row>\d+)(?:\.(?P<row_weight>\d+))?(?:\+(?P<rowspan>\d+))?:(?P<col>\d+)(?:\.(?P<col_weight>\d+))?(?:\+(?P<colspan>\d+))?(?:\/(?P<sticky>\w+))?",
             description).groupdict()
 
-        for key, item in default_dict.items():
-            if description_dict[key] is None:
-                description_dict[key] = item
-
-        return {key: (eval(value) if key != 'sticky' else value) for key, value in description_dict.items()}
+        return {key: (default_dict[key] if value is None
+                      else (eval(value) if key != 'sticky'
+                            else value)) for key, value in description_dict.items()}
 
 
 class App(Application):
