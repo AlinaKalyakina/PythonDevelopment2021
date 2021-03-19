@@ -4,25 +4,40 @@ from tkinter.messagebox import showinfo
 
 
 class Application(tk.Frame):
-    def __init__(self, root=None, title="Application", **kwargs):
+    def __init__(self, master=None, title="Application", **kwargs):
         '''Create root window with frame, tune weight and resize'''
-        super().__init__(root, **kwargs)
-        self.root = tk.Tk()
-        self.root.title(title)
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
+        super().__init__(master, **kwargs)
+        self.master.title(title)
+        self.master.columnconfigure(0, weight=1)
+        self.master.rowconfigure(0, weight=1)
         self.grid(sticky=tk.NSEW)
         self.createWidgets()
 
     def __getattr__(self, attr):
         def widget_constructor(attr, root):
-            def widget_class_wrapper(widget_class, description, **kwargs):
-                pass
+            def widget_class_wrapper(widget_class, description_str, **kwargs):
+                description = Application.parse_description(description_str)
+
+                class DummyWidget(widget_class):
+                    def __init__(self, root, **kwargs):
+                        super().__init__(root, **kwargs)
+                        self.grid(row=description['row'],
+                                  column=description['col'],
+                                  rowspan=description['rowspan'] + 1,
+                                  columnspan=description['colspan'] + 1,
+                                  sticky=description['sticky'])
+                        root.columnconfigure(description['col'], weight=description['col_weight'])
+                        root.rowconfigure(description['row'], weight=description['row_weight'])
+
+                    def __getattr__(self, sub_widget_name):
+                        return widget_constructor(sub_widget_name, self)
+
+                setattr(root, attr, DummyWidget(root, **kwargs))
             return widget_class_wrapper
         return widget_constructor(attr, self)
 
     @staticmethod
-    def parse_geometry(description):
+    def parse_description(description):
         default_dict = {'row': "None", 'row_weight': "1", 'col': "None", 'col_weight': "1", 'colspan': "0", 'sticky': 'NEWS', "rowspan": "0"}
 
         description_dict = re.match(
