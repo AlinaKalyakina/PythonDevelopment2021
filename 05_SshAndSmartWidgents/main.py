@@ -1,5 +1,25 @@
 import tkinter as tk
+import re
 
+class Oval:
+    oval_decription_re = re.compile(r"oval \<(?P<x0>[\-+]?\d+) (?P<y0>[\-+]?\d+) " \
+                             r"(?P<x1>\d+) (?P<y1>\d+)\> " \
+                             r"(?P<border_width>\d+) "
+                             r"(?P<border_color>#[0-9a-fA-F]{6}) " \
+                             r"(?P<color>#[0-9a-fA-F]{6})")
+
+    def __init__(self, description):
+        self.element_dict = description.copy()
+
+    @staticmethod
+    def fromDescription(description):
+        match = Oval.oval_decription_re.fullmatch(description)
+        if match:
+            d = match.groupdict()
+            for key in d:
+                d[key] = int(d[key])
+            return Oval(d)
+        return None
 
 class App:
     def __init__(self):
@@ -22,16 +42,54 @@ class App:
         self.text.bind("<KeyRelease>", self.text_click)
         self.canvas.bind("<Button-1>", self.canvas_click)
         self.canvas.bind("<Double-Button-1>", self.canvas_click)
-        self.canvas.bind("<Motion>", self.canvas_click)
+        self.canvas.bind("<Motion>", self.canvas_move)
+        self.canvas.bind("<ButtonRelease-1>", self.release)
+        self.oval_creating = False
+        self.oval_moving = False
 
     def start_app(self):
         self.root.mainloop()
 
+    def release(self, event):
+        self.oval_creating = False
+        self.oval_moving = False
+        self.update_text()
+
     def canvas_click(self, event):
-        pass
+        self.coord_x, self.coord_y = event.x, event.y
+        ovals = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
+        if ovals:
+            self.oval = ovals[-1]
+            self.canvas.tag_raise(self.oval)
+            self.oval_moving = True
+        else:
+            self.oval = self.canvas.create_oval(event.x, event.y, event.x, event.y,
+                                               fill="#f0f0f0", outline="#000000", width=2)
+            self.oval_creating = True
+
+    def canvas_move(self, event):
+        if self.oval_creating:
+            x0, y0, x1, y1 = self.coord_x, self.coord_y, event.x, event.y
+            self.canvas.coords(self.oval, x0, y0, x1, y1)
+        elif self.oval_moving:
+            self.canvas.move(self.oval, event.x - self.coord_x, event.y - self.coord_y)
+            self.coord_x, self.coord_y = event.x, event.y
 
     def text_click(self, event):
         pass
+
+    def update_text(self):
+        self.text.delete('0.0', tk.END)
+        for oval in self.canvas.find_all():
+            self.text.insert("end", App.to_text(oval, self.canvas))
+
+    @staticmethod
+    def to_text(oval, canvas):
+        coords = canvas.coords(oval)
+        return f"oval <{round(coords[0])} {round(coords[1])} " \
+               f"{round(coords[2])} {round(coords[3])}> " \
+               f"{canvas.itemcget(oval, 'width')} {canvas.itemcget(oval, 'outline')} " \
+               f"{canvas.itemcget(oval, 'fill')}\n"
 
 
 if __name__ == '__main__':
