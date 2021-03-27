@@ -1,28 +1,14 @@
 import tkinter as tk
 import re
 
-class Oval:
-    oval_decription_re = re.compile(r"oval \<(?P<x0>[\-+]?\d+) (?P<y0>[\-+]?\d+) " \
-                             r"(?P<x1>\d+) (?P<y1>\d+)\> " \
-                             r"(?P<border_width>\d+) "
-                             r"(?P<border_color>#[0-9a-fA-F]{6}) " \
-                             r"(?P<color>#[0-9a-fA-F]{6})")
-
-    def __init__(self, description):
-        self.element_dict = description.copy()
-
-    @staticmethod
-    def fromDescription(description):
-        match = Oval.oval_decription_re.fullmatch(description)
-        if match:
-            d = match.groupdict()
-            for key in d:
-                d[key] = int(d[key])
-            return Oval(d)
-        return None
-
 class App:
+    oval_description_re = re.compile(r"oval \<(?P<x0>[\-+]?\d+) (?P<y0>[\-+]?\d+) " \
+                             r"(?P<x1>\d+) (?P<y1>\d+)\> " \
+                             r"(?P<width>\d+) "
+                             r"(?P<outline>#[0-9a-fA-F]{6}) " \
+                             r"(?P<fill>#[0-9a-fA-F]{6})")
     def __init__(self):
+
         self.root = tk.Tk()
         self.root.title("Graph Edit")
         self.root.rowconfigure(0, weight=1)
@@ -40,6 +26,7 @@ class App:
         self.canvas.grid(row=0, column=1, sticky=tk.NSEW)
 
         self.text.bind("<KeyRelease>", self.text_click)
+        self.text.tag_config("error", background="red", selectbackground="#ff5c77")
         self.canvas.bind("<Button-1>", self.canvas_click)
         self.canvas.bind("<Double-Button-1>", self.canvas_click)
         self.canvas.bind("<Motion>", self.canvas_move)
@@ -76,7 +63,18 @@ class App:
             self.coord_x, self.coord_y = event.x, event.y
 
     def text_click(self, event):
-        pass
+        self.canvas.delete("all")
+        self.text.tag_remove("error", "0.0", tk.END)
+        input_description = self.text.get('1.0', 'end-1c').splitlines()
+        for i, line in enumerate(input_description):
+            match = App.oval_description_re.fullmatch(line)
+            if match:
+                params = match.groupdict()
+                self.canvas.create_oval(params['x0'], params["y0"], params["x1"], params["y1"],
+                                        fill=params["fill"], outline=params["outline"], width=int(params["width"]))
+            else:
+                self.text.tag_add("error", f"{i + 1}.0", f"{i + 1}.end")
+
 
     def update_text(self):
         self.text.delete('0.0', tk.END)
@@ -88,7 +86,7 @@ class App:
         coords = canvas.coords(oval)
         return f"oval <{round(coords[0])} {round(coords[1])} " \
                f"{round(coords[2])} {round(coords[3])}> " \
-               f"{canvas.itemcget(oval, 'width')} {canvas.itemcget(oval, 'outline')} " \
+               f"{round(float(canvas.itemcget(oval, 'width')))} {canvas.itemcget(oval, 'outline')} " \
                f"{canvas.itemcget(oval, 'fill')}\n"
 
 
